@@ -9,4 +9,6 @@ To use this, you only need a GitHub API Key. Set it as the environment variable 
 
 <small>Struggling with the algorithms? Set the environment variable `AILOGIN_DEBUG` to `1` to make things easier.</small>
 
-I think you could use the Hugging Face API, but i havent tested that
+## Compatibality with HuggingFace API
+
+This Program is probably compatible with any OpenAI-API compatible endpoint but not supported officially. 
