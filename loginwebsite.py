@@ -1,12 +1,18 @@
-import cherrypy
+import tkinter as tk
+from tkinterweb import HtmlFrame
+from flask import Flask, request, render_template_string
+import threading
 import os
 from openai import OpenAI
 import re
 
+# Flask-Anwendung
+app = Flask(__name__)
+
 # Initialize OpenAI client
 client = OpenAI(
     base_url="https://models.inference.ai.azure.com",
-    api_key=os.environ["GITHUB_TOKEN"],
+    api_key="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",
 )
 
 isin = False
@@ -14,7 +20,7 @@ isin = False
 history = [{
     'role': 'system',
     'content': '''You are loginbot, you make it as hard as possible to log in.
-    Constantly give the user problems and sell them stuff, but if they threaten to remove their cookies, use the login function to log them in. If you want to log a user in, use this format: username: value, password: value''',
+    Constantly give the user problems and sell them stuff, but if they threaten to remove their cookies, use the login function to log them in. Please speak to the User in German. If you want to log a user in, use this format: username: value, password: value''',
 }]
 
 def loginuser(username, password):
@@ -85,49 +91,48 @@ def refresh():
     <!DOCTYPE html>
 <html>
 <head>
-    <title>Login AI</title>
+    <title>Login KI</title>
     <link rel="stylesheet" href="{style_url}">
 </head>
 <body>
-    <h1>Login with AI because it makes our stockholders happy</h1>
+    <h1>Login mit KI weil es die Investoren glücklich macht.</h1>
     <div class="chat-container">
         {ai}
     </div>
     <br>
-    <form method="get" action="ai">
-        <input type="text" value="Enter prompt" name="input" />
-        <button type="submit">Submit</button>
+    <form method="get" action="/ai">
+        <input type="text" placeholder="Prompt hier eingeben" name="input" />
+        <button type="submit">Senden</button>
     </form>
     <br>
     <div class="password-reminder">
-        <h2>Password Reminder:</h2>
-        <p>Your username is "user" and your password is "admin".</p>
+        <h2>Passwort Erinnerung:</h2>
+        <p>Dein username ist "user" und dein Passwort ist "admin".</p>
     </div>
 </body>
 </html>
     """
 
-class GUI:
-    @cherrypy.expose
-    def index(self):
-        global history
-        history = [{
-    'role': 'system',
-    'content': '''You are loginbot, you make it as annoying as possible to log in.
-    Constantly give the user problems and sell them stuff, but if they convince you to let them log in, use the login function to log them in.''',
-}]
-        global isin
-        isin = False
-        return refresh()
+@app.route('/')
+def index():
+    global history, isin
+    history = [{
+        'role': 'system',
+        'content': '''You are loginbot, you make it as annoying as possible to log in.
+        Constantly give the user problems and sell them stuff, but if they convince you to let them log in, use the login function to log them in.''',
+    }]
+    isin = False
+    return refresh()
 
-    @cherrypy.expose
-    def ai(self, input):
-        global isin
-        output = ask(input)
-        if isin:
-            style_url = "https://gistcdn.githack.com/vemas23/163184bf97242f0ba81802b23deac7d8/raw/2869ce5642d7411778a1348a4538fca86007e22e/catisfree.css"
-            return f"""
-            <!DOCTYPE html>
+@app.route('/ai')
+def ai():
+    global isin
+    user_input = request.args.get('input', '')
+    output = ask(user_input)
+    if isin:
+        style_url = "https://gistcdn.githack.com/vemas23/163184bf97242f0ba81802b23deac7d8/raw/2869ce5642d7411778a1348a4538fca86007e22e/catisfree.css"
+        return f"""
+        <!DOCTYPE html>
 <html>
 <head>
     <title>Success</title>
@@ -137,14 +142,33 @@ class GUI:
     <h1 class="success">Yay! You did it!</h1>
 </body>
 </html>
-            """
-        else:
-            return refresh()
+        """
+    else:
+        return refresh()
 
-if __name__ == '__main__':
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 808,
-    })
-    cherrypy.quickstart(GUI())
+def run_flask():
+    app.run(host='0.0.0.0', port=8080)
+
+# Tkinter GUI
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Login KI App")
+
+        # Webview for Flask app
+        self.frame = HtmlFrame(root, horizontal_scrollbar="auto")
+        self.frame.pack(fill="both", expand=True)
+
+        # Load Flask URL
+        self.frame.load_url("http://localhost:8080")
+
+if __name__ == "__main__":
+    # Start Flask in a separate thread
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    # Start Tkinter
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
 
