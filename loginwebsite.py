@@ -12,7 +12,7 @@ app = Flask(__name__)
 # Initialize OpenAI client
 client = OpenAI(
     base_url="https://models.inference.ai.azure.com",
-    api_key="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",
+    api_key=os.environ["API_KEY"],
 )
 
 isin = False
